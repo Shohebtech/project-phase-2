@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Interview Analyzer with Face Authentication & Integrity Sentinel</title>
+  <meta name="description" content="AI-powered video interview analyzer featuring live face authentication, continuous biometric verification, anti-cheating monitoring, speech analysis, and technical evaluation.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Chart.js for Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- MediaPipe FaceMesh for Real-time Facial Landmark & Lip Detection -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+
+  <!-- Background Animated Cyber Grid -->
+  <div class="cyber-bg">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <!-- Main App Shell -->
+  <div id="app" class="app-container">
+
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+      <div class="brand">
+        <div class="logo-icon">
+          <i data-lucide="shield-check"></i>
+        </div>
+        <div class="brand-text">
+          <h1>VERI<span class="highlight">FACE</span> AI</h1>
+          <span class="sub-tag">Interview Analyzer & Bio-Sentinel</span>
+        </div>
+      </div>
+
+      <!-- Navigation Steps Indicator -->
+      <nav class="nav-steps">
+        <button id="nav-step-1" class="step-btn active" onclick="app.switchTab('auth')">
+          <span class="step-num">01</span>
+          <span class="step-label">Face Authentication</span>
+        </button>
+        <button id="nav-step-2" class="step-btn" onclick="app.switchTab('setup')">
+          <span class="step-num">02</span>
+          <span class="step-label">Interview Setup</span>
+        </button>
+        <button id="nav-step-3" class="step-btn" onclick="app.switchTab('interview')">
+          <span class="step-num">03</span>
+          <span class="step-label">Live Session</span>
+        </button>
+        <button id="nav-step-4" class="step-btn" onclick="app.switchTab('analytics')">
+          <span class="step-num">04</span>
+          <span class="step-label">Evaluation Report</span>
+        </button>
+      </nav>
+
+      <!-- Live Security Sentinel Badge -->
+      <div class="security-status-badge" id="global-sentinel-badge">
+        <span class="status-pulse unverified"></span>
+        <span id="global-status-text">UNAUTHENTICATED</span>
+      </div>
+    </header>
+
+    <!-- Main Content Stage -->
+    <main class="content-stage">
+
+      <!-- TAB 1: FACE AUTHENTICATION & ENROLMENT -->
+      <section id="tab-auth" class="tab-panel active">
+        <div class="panel-grid-2">
+          
+          <!-- Webcam & Bio Scanner Container -->
+          <div class="card glass-card scanner-card">
+            <div class="card-header">
+              <div class="title-with-icon">
+                <i data-lucide="scan-face" class="header-icon text-cyan"></i>
+                <div>
+                  <h2>Biometric Face Enrolment & Verification</h2>
+                  <p class="subtitle">Capture your baseline face profile or select a test candidate profile</p>
+                </div>
+              </div>
+              <div class="mode-toggle">
+                <button id="btn-mode-camera" class="toggle-btn active" onclick="faceEngine.useCameraMode()">
+                  <i data-lucide="camera"></i> Live Camera
+                </button>
+                <button id="btn-mode-demo" class="toggle-btn" onclick="faceEngine.useDemoMode()">
+                  <i data-lucide="user-check"></i> Demo Candidate
+                </button>
+              </div>
+            </div>
+
+            <div class="scanner-viewport">
+              <!-- Live Video Element -->
+              <video id="webcam-video" autoplay playsinline muted></video>
+              
+              <!-- Reticle Canvas Overlay -->
+              <canvas id="scanner-canvas"></canvas>
+
+              <!-- Image Placeholder for Demo Mode -->
+              <div id="demo-avatar-container" class="demo-avatar-container hidden">
+                <img id="demo-avatar-img" src="" alt="Demo Candidate Avatar">
+                <canvas id="demo-overlay-canvas"></canvas>
+              </div>
+
+              <!-- Reticle Hud Elements -->
+              <div class="hud-overlay">
+                <div class="hud-corner top-left"></div>
+                <div class="hud-corner top-right"></div>
+                <div class="hud-corner bottom-left"></div>
+                <div class="hud-corner bottom-right"></div>
+                
+                <div class="hud-scanning-line"></div>
+                
+                <div class="hud-metrics">
+                  <div class="hud-stat">
+                    <span class="label">FPS:</span>
+                    <span id="hud-fps" class="value text-cyan">60</span>
+                  </div>
+                  <div class="hud-stat">
+                    <span class="label">FACE MATCH:</span>
+                    <span id="hud-match-score" class="value">0%</span>
+                  </div>
+                  <div class="hud-stat">
+                    <span class="label">MAR (LIPS):</span>
+                    <span id="hud-mar-val" class="value text-emerald">0.12 (SILENT)</span>
+                  </div>
+                  <div class="hud-stat">
+                    <span class="label">LIP SYNC:</span>
+                    <span id="hud-lipsync-status" class="value text-cyan">SYNCHRONIZED</span>
+                  </div>
+                  <div class="hud-stat">
+                    <span class="label">LIVENESS:</span>
+                    <span id="hud-liveness" class="value">PENDING</span>
+                  </div>
+                </div>
+
+                <div id="hud-alert-banner" class="hud-alert-banner hidden">
+                  <i data-lucide="alert-triangle"></i>
+                  <span id="hud-alert-text">ATTENTION: MULTIPLE FACES DETECTED</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Scanner Controls -->
+            <div class="scanner-controls">
+              <div class="camera-status" id="camera-status-msg">
+                <i data-lucide="info"></i> Please grant camera permission to start biometric enrolment.
+              </div>
+
+              <div class="button-group">
+                <button id="btn-start-camera" class="btn btn-primary" onclick="faceEngine.initCamera()">
+                  <i data-lucide="video"></i> Start Webcam
+                </button>
+                <button id="btn-enrol-face" class="btn btn-accent" onclick="faceEngine.enrolCandidateFace()" disabled>
+                  <i data-lucide="user-plus"></i> Register Baseline Snapshot
+                </button>
+                <button id="btn-verify-face" class="btn btn-success" onclick="faceEngine.verifyFaceIdentity()" disabled>
+                  <i data-lucide="shield-check"></i> Verify Identity Match
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Enrolment Details & Bio Data Card -->
+          <div class="card glass-card info-card">
+            <div class="card-header">
+              <div class="title-with-icon">
+                <i data-lucide="fingerprint" class="header-icon text-purple"></i>
+                <h2>Candidate Biometric Profile</h2>
+              </div>
+            </div>
+
+            <div class="profile-form">
+              <div class="form-group">
+                <label for="candidate-name">Candidate Full Name</label>
+                <input type="text" id="candidate-name" class="form-input" value="Sarah Jenkins" placeholder="Enter full name">
+              </div>
+
+              <div class="form-group">
+                <label for="candidate-id">Candidate ID / Passport</label>
+                <input type="text" id="candidate-id" class="form-input" value="CAND-89420-US" placeholder="Enter candidate ID">
+              </div>
+
+              <div class="form-group">
+                <label>Select Preset Demo Profile (Optional)</label>
+                <div class="preset-chips">
+                  <button class="chip" onclick="app.loadPresetCandidate('sarah')">
+                    <span class="chip-dot font-purple"></span> Sarah Jenkins (Senior AI Eng)
+                  </button>
+                  <button class="chip" onclick="app.loadPresetCandidate('alex')">
+                    <span class="chip-dot font-cyan"></span> Alex Chen (Full-Stack Dev)
+                  </button>
+                  <button class="chip" onclick="app.loadPresetCandidate('marcus')">
+                    <span class="chip-dot font-emerald"></span> Marcus Vance (Data Lead)
+                  </button>
+                </div>
+              </div>
+
+              <!-- Enroled Face Preview & Biometric Vector Data -->
+              <div class="enroled-snapshot-box">
+                <div class="box-title">Registered Baseline Template</div>
+                <div class="snapshot-content">
+                  <div class="snapshot-preview" id="snapshot-container">
+                    <div class="no-snapshot">
+                      <i data-lucide="user-x"></i>
+                      <span>No Baseline Registered</span>
+                    </div>
+                    <img id="enroled-snapshot-img" class="hidden" src="" alt="Enroled Baseline Face">
+                  </div>
+                  
+                  <div class="bio-vector-stats">
+                    <div class="bio-row">
+                      <span class="bio-label">Face Contour Hash:</span>
+                      <span id="bio-hash" class="bio-val font-mono">--</span>
+                    </div>
+                    <div class="bio-row">
+                      <span class="bio-label">Eye Distance Ratio:</span>
+                      <span id="bio-eye-dist" class="bio-val font-mono">--</span>
+                    </div>
+                    <div class="bio-row">
+                      <span class="bio-label">Symmetry Score:</span>
+                      <span id="bio-symmetry" class="bio-val font-mono">--</span>
+                    </div>
+                    <div class="bio-row">
+                      <span class="bio-label">Liveness Status:</span>
+                      <span id="bio-liveness-badge" class="badge badge-warning">Unverified</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action to Proceed -->
+              <div class="action-footer">
+                <button id="btn-proceed-setup" class="btn btn-glow btn-block" onclick="app.proceedToSetup()" disabled>
+                  Proceed to Interview Setup <i data-lucide="arrow-right"></i>
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB 2: INTERVIEW SETUP & ROLE SELECTOR -->
+      <section id="tab-setup" class="tab-panel">
+        <div class="panel-header text-center">
+          <h2>Configure AI Interview Parameters</h2>
+          <p class="subtitle">Select target job position, difficulty level, and security monitoring strictness</p>
+        </div>
+
+        <div class="setup-grid">
+
+          <!-- Role Selection Cards -->
+          <div class="role-cards-container">
+            <h3 class="section-title"><i data-lucide="briefcase"></i> Select Target Job Role</h3>
+            <div class="role-grid">
+              
+              <div class="role-card active" onclick="app.selectRole('fullstack', this)">
+                <div class="role-icon-box bg-cyan">
+                  <i data-lucide="code-2"></i>
+                </div>
+                <h4>Senior Full-Stack Engineer</h4>
+                <p>React, Node.js, System Design, GraphQL & Database Performance</p>
+                <div class="role-meta">
+                  <span><i data-lucide="clock"></i> 15 Mins</span>
+                  <span><i data-lucide="file-text"></i> 4 Questions</span>
+                </div>
+              </div>
+
+              <div class="role-card" onclick="app.selectRole('ai_engineer', this)">
+                <div class="role-icon-box bg-purple">
+                  <i data-lucide="brain-circuit"></i>
+                </div>
+                <h4>AI / ML Systems Engineer</h4>
+                <p>LLM Architecture, PyTorch, Embeddings, Vector Databases & RAG</p>
+                <div class="role-meta">
+                  <span><i data-lucide="clock"></i> 20 Mins</span>
+                  <span><i data-lucide="file-text"></i> 4 Questions</span>
+                </div>
+              </div>
+
+              <div class="role-card" onclick="app.selectRole('product_mgr', this)">
+                <div class="role-icon-box bg-emerald">
+                  <i data-lucide="layout-grid"></i>
+                </div>
+                <h4>Technical Product Manager</h4>
+                <p>Product Strategy, System Architecture, Metrics & Agile Leadership</p>
+                <div class="role-meta">
+                  <span><i data-lucide="clock"></i> 15 Mins</span>
+                  <span><i data-lucide="file-text"></i> 4 Questions</span>
+                </div>
+              </div>
+
+              <div class="role-card" onclick="app.selectRole('devops', this)">
+                <div class="role-icon-box bg-amber">
+                  <i data-lucide="server"></i>
+                </div>
+                <h4>Cloud & DevOps Architect</h4>
+                <p>Kubernetes, AWS Infrastructure, CI/CD Pipelines & Security</p>
+                <div class="role-meta">
+                  <span><i data-lucide="clock"></i> 15 Mins</span>
+                  <span><i data-lucide="file-text"></i> 4 Questions</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Configuration Settings Card -->
+          <div class="card glass-card config-card">
+            <h3 class="section-title"><i data-lucide="sliders"></i> Security & Evaluation Rules</h3>
+            
+            <div class="config-form">
+              <div class="form-group">
+                <label><i data-lucide="shield-alert"></i> Anti-Cheating Sentinel Strictness</label>
+                <div class="radio-group">
+                  <label class="radio-card">
+                    <input type="radio" name="strictness" value="medium" checked>
+                    <div class="radio-content">
+                      <span class="title">Standard Sentinel</span>
+                      <span class="desc">Flags multi-face presence and prolonged out-of-frame events.</span>
+                    </div>
+                  </label>
+                  <label class="radio-card">
+                    <input type="radio" name="strictness" value="strict">
+                    <div class="radio-content">
+                      <span class="title">Strict Proctor</span>
+                      <span class="desc">Flags head turns, glance away, and secondary face immediately.</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label><i data-lucide="mic"></i> Voice Interview & Speech Synthesis</label>
+                <div class="toggle-option">
+                  <span>Enable AI Audio Question Readout (TTS)</span>
+                  <input type="checkbox" id="chk-enable-tts" checked class="toggle-checkbox">
+                </div>
+                <div class="toggle-option">
+                  <span>Enable Candidate Microphone Recording (STT)</span>
+                  <input type="checkbox" id="chk-enable-stt" checked class="toggle-checkbox">
+                </div>
+              </div>
+
+              <div class="security-verification-summary">
+                <div class="summary-row">
+                  <span>Verified Identity:</span>
+                  <span id="setup-verified-name" class="font-bold text-cyan">Sarah Jenkins</span>
+                </div>
+                <div class="summary-row">
+                  <span>Baseline Match Score:</span>
+                  <span id="setup-match-score" class="badge badge-success">98.4% Match</span>
+                </div>
+              </div>
+
+              <button class="btn btn-primary btn-glow btn-block btn-lg" onclick="interviewEngine.startInterview()">
+                <i data-lucide="play-circle"></i> Launch Live AI Interview Session
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB 3: LIVE INTERVIEW SESSION -->
+      <section id="tab-interview" class="tab-panel">
+        <div class="interview-layout">
+          
+          <!-- Left Column: AI Questioner & Response Stage -->
+          <div class="interview-main">
+            
+            <!-- AI Interviewer Banner -->
+            <div class="card glass-card interviewer-card">
+              <div class="interviewer-header">
+                <div class="interviewer-avatar">
+                  <div class="avatar-ring"></div>
+                  <i data-lucide="bot"></i>
+                </div>
+                <div class="interviewer-info">
+                  <div class="badge-row">
+                    <span class="badge badge-cyan" id="live-role-badge">Senior Full-Stack Engineer</span>
+                    <span class="badge badge-purple" id="live-q-progress">Question 1 of 4</span>
+                  </div>
+                  <h3 id="live-question-title">Loading Question...</h3>
+                </div>
+                <div class="timer-box">
+                  <i data-lucide="timer"></i>
+                  <span id="interview-timer">00:00</span>
+                </div>
+              </div>
+
+              <div class="question-text-box">
+                <p id="live-question-text">Question text will appear here...</p>
+                <div class="audio-pulse-bar hidden" id="tts-active-indicator">
+                  <span class="wave"></span><span class="wave"></span><span class="wave"></span>
+                  <span>AI Interviewer Speaking...</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Candidate Answer Response Area -->
+            <div class="card glass-card response-card">
+              <div class="card-header flex-between">
+                <div class="title-with-icon">
+                  <i data-lucide="mic" class="header-icon text-cyan"></i>
+                  <h3>Candidate Verbal & Written Response</h3>
+                </div>
+                <div class="speech-controls">
+                  <button id="btn-toggle-mic" class="btn btn-accent" onclick="interviewEngine.toggleMicListening()">
+                    <i data-lucide="mic"></i> Start Mic Recording
+                  </button>
+                </div>
+              </div>
+
+              <div class="transcription-container">
+                <textarea id="candidate-response-input" class="response-textarea" placeholder="Speak into your microphone or type your technical response here in detail..."></textarea>
+                
+                <div class="response-metrics">
+                  <div class="metric-pill">
+                    <i data-lucide="file-text"></i> Word Count: <span id="resp-word-count">0</span> words
+                  </div>
+                  <div class="metric-pill">
+                    <i data-lucide="activity"></i> Est. WPM: <span id="resp-wpm">0</span>
+                  </div>
+                  <div class="metric-pill">
+                    <i data-lucide="sparkles"></i> Response Depth: <span id="resp-depth-badge" class="badge badge-info">Waiting</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="response-actions flex-between">
+                <button class="btn btn-secondary" onclick="interviewEngine.skipQuestion()">
+                  <i data-lucide="skip-forward"></i> Skip Question
+                </button>
+                <button class="btn btn-success btn-glow" onclick="interviewEngine.submitAnswer()">
+                  Submit Answer & Next <i data-lucide="arrow-right"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Right Column: Live Webcam Security Sentinel & Audit Log -->
+          <div class="interview-sidebar">
+            
+            <!-- Live Anti-Cheating Monitor Webcam Frame -->
+            <div class="card glass-card live-feed-card">
+              <div class="card-header flex-between">
+                <div class="title-with-icon">
+                  <i data-lucide="eye" class="header-icon text-emerald"></i>
+                  <h4>Live Bio-Sentinel Feed</h4>
+                </div>
+                <span class="badge badge-live" id="sentinel-live-indicator"><i data-lucide="dot"></i> LIVE</span>
+              </div>
+
+              <div class="live-webcam-box">
+                <video id="live-interview-video" autoplay playsinline muted></video>
+                <canvas id="live-interview-canvas"></canvas>
+
+                <!-- Overlay Hud Stats -->
+                <div class="live-hud-stats">
+                  <div class="stat-badge">
+                    <span class="label">IDENTITY:</span>
+                    <span id="live-id-status" class="value text-emerald">MATCHED</span>
+                  </div>
+                  <div class="stat-badge">
+                    <span class="label">ATTENTION:</span>
+                    <span id="live-attention-status" class="value text-cyan">CENTERED</span>
+                  </div>
+                  <div class="stat-badge">
+                    <span class="label">LIP MOTION:</span>
+                    <span id="live-lip-status" class="value text-emerald">IDLE</span>
+                  </div>
+                  <div class="stat-badge">
+                    <span class="label">LIP SYNC:</span>
+                    <span id="live-sync-status" class="value text-purple">100% MATCH</span>
+                  </div>
+                </div>
+
+                <!-- Live Audio-Visual Lip Energy Meter Bar -->
+                <div class="live-audio-vis-meter">
+                  <div class="meter-label">
+                    <span>MIC AUDIO LEVEL</span>
+                    <span id="live-mic-db">0%</span>
+                  </div>
+                  <div class="meter-bar-track">
+                    <div id="live-mic-bar-fill" class="meter-bar-fill" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <div id="live-cheating-alert" class="cheating-alert-overlay hidden">
+                  <i data-lucide="shield-alert"></i>
+                  <span id="cheating-alert-msg">WARNING: LOOKING AWAY</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Security Violation Log -->
+            <div class="card glass-card audit-log-card">
+              <div class="card-header flex-between">
+                <h4><i data-lucide="history"></i> Security Audit Log</h4>
+                <span class="badge badge-secondary" id="total-alerts-count">0 Incidents</span>
+              </div>
+
+              <div class="audit-log-list" id="audit-log-container">
+                <div class="audit-empty-state">
+                  <i data-lucide="shield-check" class="text-emerald"></i>
+                  <p>No security violations detected. Interview environment secure.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB 4: COMPREHENSIVE ANALYTICS & SCORECARD -->
+      <section id="tab-analytics" class="tab-panel">
+        <div class="panel-header text-center">
+          <h2>Interview Evaluation & Integrity Report</h2>
+          <p class="subtitle">Complete breakdown of technical competency, speech analytics, and face authentication audit</p>
+        </div>
+
+        <div class="analytics-dashboard">
+          
+          <!-- Top Metric Cards -->
+          <div class="analytics-summary-cards">
+            
+            <div class="card glass-card metric-card">
+              <div class="metric-icon bg-cyan"><i data-lucide="award"></i></div>
+              <div class="metric-body">
+                <span class="metric-title">Overall AI Score</span>
+                <div class="metric-value" id="res-overall-score">88<span class="small">/100</span></div>
+                <span class="metric-tag text-emerald">Strong Hire Recommendation</span>
+              </div>
+            </div>
+
+            <div class="card glass-card metric-card">
+              <div class="metric-icon bg-emerald"><i data-lucide="shield-check"></i></div>
+              <div class="metric-body">
+                <span class="metric-title">Face Identity Verification</span>
+                <div class="metric-value text-emerald" id="res-auth-match">98.6%</div>
+                <span class="metric-tag" id="res-auth-status">PASSED (Verified)</span>
+              </div>
+            </div>
+
+            <div class="card glass-card metric-card">
+              <div class="metric-icon bg-purple"><i data-lucide="brain"></i></div>
+              <div class="metric-body">
+                <span class="metric-title">Technical Competency</span>
+                <div class="metric-value" id="res-tech-score">92<span class="small">%</span></div>
+                <span class="metric-tag text-purple">High Technical Depth</span>
+              </div>
+            </div>
+
+            <div class="card glass-card metric-card">
+              <div class="metric-icon bg-amber"><i data-lucide="alert-triangle"></i></div>
+              <div class="metric-body">
+                <span class="metric-title">Security Incidents</span>
+                <div class="metric-value" id="res-incidents-count">0</div>
+                <span class="metric-tag text-emerald" id="res-integrity-tag">100% Exam Integrity</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Charts & Detail Section -->
+          <div class="charts-row">
+            
+            <!-- Radar Chart: Competency Breakdown -->
+            <div class="card glass-card chart-card">
+              <div class="card-header">
+                <h3><i data-lucide="radar"></i> Candidate Competency Radar</h3>
+              </div>
+              <div class="chart-container">
+                <canvas id="chart-competency-radar"></canvas>
+              </div>
+            </div>
+
+            <!-- Face Attention & Emotion Distribution -->
+            <div class="card glass-card chart-card">
+              <div class="card-header">
+                <h3><i data-lucide="smile"></i> Facial Engagement & Focus Tracking</h3>
+              </div>
+              <div class="chart-container">
+                <canvas id="chart-engagement-line"></canvas>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Lip Movement & Audio-Visual Lip Sync Analysis Card -->
+          <div class="card glass-card lip-analytics-card">
+            <div class="card-header flex-between">
+              <div class="title-with-icon">
+                <i data-lucide="activity" class="header-icon text-cyan"></i>
+                <div>
+                  <h3>Lip Movement & Audio-Visual Lip-Sync Analysis</h3>
+                  <p class="subtitle">Real-time Mouth Aspect Ratio (MAR) vs Microphone Vocal Energy (Anti-Proxy Dubbing Audit)</p>
+                </div>
+              </div>
+              <div class="lip-summary-badges">
+                <span class="badge badge-success" id="report-lipsync-score"><i data-lucide="check-check"></i> 99.4% Audio-Visual Sync Match</span>
+                <span class="badge badge-cyan" id="report-mar-avg"><i data-lucide="mic"></i> Avg Speaking MAR: 0.34</span>
+                <span class="badge badge-purple" id="report-lip-cadence"><i data-lucide="zap"></i> Cadence: 2.6 Cycles/sec</span>
+              </div>
+            </div>
+            
+            <div class="chart-container-lg">
+              <canvas id="chart-lip-movement"></canvas>
+            </div>
+          </div>
+
+          <!-- Per-Question Response Review Table -->
+          <div class="card glass-card questions-review-card">
+            <div class="card-header flex-between">
+              <h3><i data-lucide="list-checks"></i> Question-by-Question Evaluation Breakdown</h3>
+              <button class="btn btn-secondary btn-sm" onclick="window.print()">
+                <i data-lucide="printer"></i> Export PDF / Print Report
+              </button>
+            </div>
+
+            <div id="questions-evaluation-container" class="questions-review-list">
+              <!-- Dynamically populated per question evaluation -->
+            </div>
+          </div>
+
+          <!-- Audit Log Summary Card -->
+          <div class="card glass-card audit-summary-card">
+            <div class="card-header">
+              <h3><i data-lucide="shield"></i> Biometric Integrity & Sentinel Audit Log</h3>
+            </div>
+            <div class="table-responsive">
+              <table class="audit-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Event Type</th>
+                    <th>Severity</th>
+                    <th>Face Match Confidence</th>
+                    <th>Detail / Flag Reason</th>
+                  </tr>
+                </thead>
+                <tbody id="final-audit-table-body">
+                  <!-- Audit rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>VERIFACE AI — Secure AI Interview Analyzer & Biometric Sentinel &copy; 2026. Powered by Browser Computer Vision & WebRTC.</p>
+    </footer>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/demoProfiles.js"></script>
+  <script src="js/faceDetectionEngine.js"></script>
+
+  <script src="js/interviewEngine.js"></script>
+  <script src="js/analyticsEngine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
