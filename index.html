@@ -21,6 +21,12 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 
+  <!-- PDF.js for Resume Reading & Text Extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  
+  <!-- html2pdf.js for Generating Downloadable PDF Evaluation Reports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
   <!-- Main Stylesheet -->
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -196,6 +202,20 @@
               <div class="form-group">
                 <label for="candidate-id">Candidate ID / Passport</label>
                 <input type="text" id="candidate-id" class="form-input" value="CAND-89420-US" placeholder="Enter candidate ID">
+              </div>
+
+              <!-- PDF Resume Upload -->
+              <div class="form-group">
+                <label for="candidate-pdf-input"><i data-lucide="file-text" class="text-cyan"></i> Import Candidate Resume (PDF Document)</label>
+                <div class="pdf-upload-box">
+                  <input type="file" id="candidate-pdf-input" accept=".pdf" class="hidden" onchange="app.handlePdfResumeUpload(event)">
+                  <button type="button" class="btn btn-secondary btn-block" onclick="document.getElementById('candidate-pdf-input').click()">
+                    <i data-lucide="upload"></i> Select & Parse PDF Resume
+                  </button>
+                  <div id="pdf-resume-status-badge" class="pdf-status-msg text-muted mt-1">
+                    <i data-lucide="info"></i> No PDF resume attached. Auto-extracts candidate details when uploaded.
+                  </div>
+                </div>
               </div>
 
               <div class="form-group">
@@ -635,8 +655,8 @@
           <div class="card glass-card questions-review-card">
             <div class="card-header flex-between">
               <h3><i data-lucide="list-checks"></i> Question-by-Question Evaluation Breakdown</h3>
-              <button class="btn btn-secondary btn-sm" onclick="window.print()">
-                <i data-lucide="printer"></i> Export PDF / Print Report
+              <button class="btn btn-secondary btn-sm" onclick="analyticsEngine.exportReportPDF()">
+                <i data-lucide="file-down"></i> Export Official PDF Evaluation Report
               </button>
             </div>
 
@@ -753,6 +773,7 @@
 
   <!-- Scripts -->
   <script src="js/demoProfiles.js"></script>
+  <script src="js/resumeParser.js"></script>
   <script src="js/candidateStore.js"></script>
   <script src="js/faceDetectionEngine.js"></script>
   <script src="js/interviewEngine.js"></script>

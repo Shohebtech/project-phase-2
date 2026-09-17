@@ -81,6 +81,7 @@ class AnalyticsEngine {
         roleTitle: roleBadge,
         timestamp: new Date().toISOString(),
         avatarSnapshot: currentCand.snapshotUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
+        resumePdfDataUrl: (currentCand.resumePdfDataUrl || (window.app && app.currentPdfResume ? app.currentPdfResume.dataUrl : '')),
         biometrics: {
           contourHash: currentCand.contourHash || 'VF-89420-HEX',
           eyeDistRatio: currentCand.eyeDistRatio || '0.28',
@@ -100,6 +101,32 @@ class AnalyticsEngine {
       };
 
       candidateStore.saveCandidate(candidateRecord);
+    }
+  }
+
+  exportReportPDF() {
+    const reportElement = document.getElementById('tab-analytics');
+    if (!reportElement) return;
+
+    const candName = (window.faceEngine && faceEngine.enroledTemplate) ? faceEngine.enroledTemplate.name : 'Candidate';
+    const filename = `VeriFace_Evaluation_Report_${candName.replace(/\s+/g, '_')}.pdf`;
+
+    if (window.html2pdf) {
+      const opt = {
+        margin: 0.4,
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      
+      // Temporary styling for clean PDF output
+      reportElement.classList.add('pdf-export-mode');
+      window.html2pdf().set(opt).from(reportElement).save().then(() => {
+        reportElement.classList.remove('pdf-export-mode');
+      });
+    } else {
+      window.print();
     }
   }
 

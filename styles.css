@@ -1248,6 +1248,32 @@ body {
   margin-top: 1rem;
 }
 
+/* PDF Resume Import & Export Styling */
+.pdf-upload-box {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px dashed var(--accent-cyan);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.pdf-status-msg {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin-top: 0.5rem;
+}
+
+.pdf-export-mode {
+  background: #080c14 !important;
+  color: #f8fafc !important;
+  padding: 1rem !important;
+}
+
+.pdf-export-mode .btn {
+  display: none !important;
+}
+
 /* Candidate Hub & History Toolbar */
 .candidate-toolbar-card {
   padding: 1.25rem;
