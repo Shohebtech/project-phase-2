@@ -69,10 +69,6 @@
           <span class="step-num">04</span>
           <span class="step-label">Evaluation Report</span>
         </button>
-        <button id="nav-step-5" class="step-btn" onclick="app.switchTab('candidates')">
-          <span class="step-num">05</span>
-          <span class="step-label">Candidate Hub</span>
-        </button>
       </nav>
 
       <!-- Live Security Sentinel Badge -->
@@ -674,77 +670,6 @@
         </div>
       </section>
 
-      <!-- TAB 5: CANDIDATE DATA STORAGE & MANAGEMENT HUB -->
-      <section id="tab-candidates" class="tab-panel">
-        <div class="panel-header text-center">
-          <h2>Candidate Data Storage & History Hub</h2>
-          <p class="subtitle">Search, filter, inspect, and export persistent candidate evaluation reports</p>
-        </div>
-
-        <!-- Candidate Toolbar & Filters -->
-        <div class="card glass-card candidate-toolbar-card">
-          <div class="toolbar-grid">
-            <div class="search-box">
-              <i data-lucide="search"></i>
-              <input type="text" id="cand-search-input" class="form-input" placeholder="Search by candidate name or ID..." oninput="app.filterCandidates()">
-            </div>
-            
-            <div class="filter-group">
-              <select id="cand-role-select" class="form-select" onchange="app.filterCandidates()">
-                <option value="all">All Job Positions</option>
-                <option value="fullstack">Senior Full-Stack Engineer</option>
-                <option value="ai_engineer">AI / ML Systems Engineer</option>
-                <option value="product_mgr">Technical Product Manager</option>
-                <option value="devops">Cloud & DevOps Architect</option>
-              </select>
-
-              <div class="chip-filter-row">
-                <button class="chip active" onclick="app.setGradeFilter('all', this)">All Grades</button>
-                <button class="chip" onclick="app.setGradeFilter('STRONG HIRE', this)"><span class="chip-dot font-emerald"></span> Strong Hire</button>
-                <button class="chip" onclick="app.setGradeFilter('HIRE', this)"><span class="chip-dot font-cyan"></span> Hire</button>
-                <button class="chip" onclick="app.setGradeFilter('FLAGGED FOR REVIEW', this)"><span class="chip-dot font-rose"></span> Flagged</button>
-              </div>
-            </div>
-
-            <div class="action-buttons">
-              <input type="file" id="import-json-file" accept=".json" class="hidden" onchange="candidateStore.importJSON(event)">
-              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-json-file').click()">
-                <i data-lucide="upload"></i> Import JSON
-              </button>
-              <button class="btn btn-accent btn-sm" onclick="candidateStore.exportAllJSON()">
-                <i data-lucide="download"></i> Export All JSON
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Candidates List / Grid -->
-        <div id="candidate-grid-container" class="candidate-grid">
-          <!-- Dynamically populated candidate cards -->
-        </div>
-
-        <!-- Candidate Detail Inspection Modal -->
-        <div id="candidate-detail-modal" class="modal-overlay hidden">
-          <div class="modal-card glass-card">
-            <div class="modal-header flex-between">
-              <div class="title-with-icon">
-                <i data-lucide="user-check" class="header-icon text-cyan"></i>
-                <div>
-                  <h3 id="modal-cand-name">Candidate Evaluation Detail</h3>
-                  <span id="modal-cand-meta" class="subtitle">Session Details</span>
-                </div>
-              </div>
-              <button class="btn-close" onclick="app.closeCandidateModal()"><i data-lucide="x"></i></button>
-            </div>
-            
-            <div class="modal-body" id="modal-cand-body">
-              <!-- Dynamically populated candidate historical detail -->
-            </div>
-          </div>
-        </div>
-
-      </section>
-
     </main>
 
     <!-- Footer -->
@@ -756,7 +681,6 @@
 
   <!-- Scripts -->
   <script src="js/demoProfiles.js"></script>
-  <script src="js/candidateStore.js"></script>
   <script src="js/faceDetectionEngine.js"></script>
   <script src="js/interviewEngine.js"></script>
   <script src="js/analyticsEngine.js"></script>
