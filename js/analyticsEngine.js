@@ -81,7 +81,6 @@ class AnalyticsEngine {
         roleTitle: roleBadge,
         timestamp: new Date().toISOString(),
         avatarSnapshot: currentCand.snapshotUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
-        resumePdfDataUrl: (currentCand.resumePdfDataUrl || (window.app && app.currentPdfResume ? app.currentPdfResume.dataUrl : '')),
         biometrics: {
           contourHash: currentCand.contourHash || 'VF-89420-HEX',
           eyeDistRatio: currentCand.eyeDistRatio || '0.28',

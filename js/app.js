@@ -46,59 +46,6 @@ class AppController {
     }
 
     // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  currentPdfResume = null;
-
-  async handlePdfResumeUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const statusBadge = document.getElementById('pdf-resume-status-badge');
-    if (statusBadge) {
-      statusBadge.innerHTML = `<span class="text-cyan"><i data-lucide="loader" class="spin"></i> Parsing PDF Resume text & metadata...</span>`;
-      if (window.lucide) lucide.createIcons();
-    }
-
-    try {
-      const parsed = await resumeParser.parsePdfResume(file);
-      this.currentPdfResume = parsed;
-
-      // Auto-fill Name & ID
-      if (parsed.name && parsed.name !== 'Candidate') {
-        document.getElementById('candidate-name').value = parsed.name;
-      }
-      if (!document.getElementById('candidate-id').value || document.getElementById('candidate-id').value === 'CAND-89420-US') {
-        document.getElementById('candidate-id').value = 'CAND-' + Math.floor(Math.random() * 89999 + 10000) + '-US';
-      }
-
-      if (statusBadge) {
-        statusBadge.innerHTML = `
-          <span class="text-emerald font-bold">
-            <i data-lucide="check-circle"></i> Attached PDF: ${file.name}
-          </span>
-          <br>
-          <span class="text-muted" style="font-size:0.75rem;">Skills Detected: ${parsed.skills.join(', ') || 'General Engineering'}</span>
-        `;
-        if (window.lucide) lucide.createIcons();
-      }
-
-      // Attach to current faceEngine enroled template if exists
-      if (window.faceEngine) {
-        faceEngine.enroledTemplate = faceEngine.enroledTemplate || {};
-        faceEngine.enroledTemplate.name = parsed.name || faceEngine.enroledTemplate.name;
-        faceEngine.enroledTemplate.resumePdfDataUrl = parsed.dataUrl;
-        faceEngine.enroledTemplate.resumeSkills = parsed.skills;
-        faceEngine.enroledTemplate.resumeText = parsed.summary;
-      }
-    } catch (err) {
-      console.error('PDF parsing error:', err);
-      if (statusBadge) {
-        statusBadge.innerHTML = `<span class="text-amber"><i data-lucide="alert-triangle"></i> Failed to parse PDF text. Document attached as raw PDF.</span>`;
-        if (window.lucide) lucide.createIcons();
-      }
-    }
-  }
-
   activeGradeFilter = 'all';
 
   setGradeFilter(grade, btnEl) {
@@ -235,28 +182,6 @@ class AppController {
       <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem;">
         <td class="font-mono text-cyan" style="padding: 0.4rem;">${log.time}</td>
         <td style="padding: 0.4rem;"><span class="badge ${log.severity === 'CRITICAL' ? 'badge-rose' : 'badge-warning'}">${log.severity}</span></td>
-        <td style="padding: 0.4rem;">${log.msg}</td>
-      </tr>
-    `).join('');
-
-    let pdfSectionHtml = '';
-    if (candidate.resumePdfDataUrl) {
-      pdfSectionHtml = `
-        <h4 style="margin-top: 1.25rem; margin-bottom: 0.75rem; color: var(--accent-cyan);">
-          <i data-lucide="file-text"></i> Attached PDF Candidate Resume
-        </h4>
-        <div style="background: rgba(0,0,0,0.4); padding: 1rem; border-radius: 12px; border: 1px solid var(--bg-card-border);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-            <span style="font-size: 0.85rem; color: var(--text-secondary);"><i data-lucide="check-circle" class="text-emerald"></i> PDF Document Embedded</span>
-            <a href="${candidate.resumePdfDataUrl}" download="${candidate.name.replace(/\s+/g, '_')}_Resume.pdf" class="btn btn-accent btn-sm">
-              <i data-lucide="download"></i> Download PDF Resume
-            </a>
-          </div>
-          <iframe src="${candidate.resumePdfDataUrl}" style="width: 100%; height: 260px; border: none; border-radius: 8px;"></iframe>
-        </div>
-      `;
-    }
-
     body.innerHTML = `
       <div class="modal-detail-grid" style="display: grid; grid-template-columns: 220px 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
         <div class="cand-snapshot-col text-center">
@@ -290,9 +215,7 @@ class AppController {
         </div>
       </div>
 
-      ${pdfSectionHtml}
-
-      <h4 style="margin-top: 1.25rem; margin-bottom: 0.75rem; color: var(--accent-cyan);"><i data-lucide="list-checks"></i> Question Responses & Transcripts</h4>
+      <h4 style="margin-bottom: 0.75rem; color: var(--accent-cyan);"><i data-lucide="list-checks"></i> Question Responses & Transcripts</h4>
       <div>${answersHtml || '<p class="text-muted">No answers recorded.</p>'}</div>
 
       <h4 style="margin-top: 1.25rem; margin-bottom: 0.75rem; color: var(--accent-purple);"><i data-lucide="shield"></i> Biometric Integrity & Audit Incidents</h4>
